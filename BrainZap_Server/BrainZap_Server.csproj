@@ -46,6 +46,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CLASSES\ClPreguntas.cs" />
+    <Compile Include="CLASSES\ClSocketServidor.cs" />
+    <Compile Include="CLASSES\ClUsuario.cs" />
     <Compile Include="FrmMain.cs">
       <SubType>Form</SubType>
     </Compile>
