@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace BrainZap_Server.CLASSES
 {
-    internal class ClPreguntas
+    internal class ClClientHandler
     {
-        //Representa una pregunta con sus respuestas y la correcta.
+        //Maneja la comunicación individual con cada cliente.
     }
 }

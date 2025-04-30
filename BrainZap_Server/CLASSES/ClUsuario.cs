@@ -8,5 +8,6 @@ namespace BrainZap_Server.CLASSES
 {
     internal class ClUsuario
     {
+        //Representa a un jugador: nickname, puntuación, etc.
     }
 }

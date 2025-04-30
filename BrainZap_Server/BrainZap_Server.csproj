@@ -46,6 +46,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CLASSES\ClClientHandler.cs" />
+    <Compile Include="CLASSES\ClGestorPartidaServidor.cs" />
+    <Compile Include="CLASSES\ClGestorPreguntes.cs" />
     <Compile Include="CLASSES\ClPreguntas.cs" />
     <Compile Include="CLASSES\ClSocketServidor.cs" />
     <Compile Include="CLASSES\ClUsuario.cs" />

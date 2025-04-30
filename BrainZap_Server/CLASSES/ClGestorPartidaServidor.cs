@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace BrainZap_Server.CLASSES
 {
-    internal class ClPreguntas
+    internal class ClGestorPartidaServidor
     {
-        //Representa una pregunta con sus respuestas y la correcta.
+        //Controla el juego: inicio, preguntas, puntuación, final.
     }
 }
