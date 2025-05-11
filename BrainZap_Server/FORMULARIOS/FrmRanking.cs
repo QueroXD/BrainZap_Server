@@ -19,6 +19,7 @@ namespace BrainZap_Server.FORMULARIOS
 
         private void FrmRanking_Load(object sender, EventArgs e)
         {
+            // Ordena y muestra los primeros 3 jugadores
             var top3 = jugadores
                         .OrderByDescending(j => j.Puntos)
                         .Take(3)

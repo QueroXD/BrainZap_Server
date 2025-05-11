@@ -3,10 +3,8 @@
     partial class FrmPregunta
     {
         private System.ComponentModel.IContainer components = null;
-        private System.Windows.Forms.Label lblPregunta;
         private System.Windows.Forms.Label lblResultadoFinal;
         private System.Windows.Forms.Label lblTiempo;
-        private System.Windows.Forms.Button[] btnOpciones;
         private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.ListBox lstResultados;
 
@@ -18,85 +16,131 @@
 
         private void InitializeComponent()
         {
-            this.lblPregunta = new System.Windows.Forms.Label();
             this.lblTiempo = new System.Windows.Forms.Label();
             this.lblResultadoFinal = new System.Windows.Forms.Label();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.lstResultados = new System.Windows.Forms.ListBox();
-            this.btnOpciones = new System.Windows.Forms.Button[4];
-
-            this.btnOpciones[0] = new System.Windows.Forms.Button();
-            this.btnOpciones[1] = new System.Windows.Forms.Button();
-            this.btnOpciones[2] = new System.Windows.Forms.Button();
-            this.btnOpciones[3] = new System.Windows.Forms.Button();
-
+            this.btnOpcion4 = new System.Windows.Forms.Button();
+            this.btnOpcion3 = new System.Windows.Forms.Button();
+            this.btnOpcion2 = new System.Windows.Forms.Button();
+            this.btnOpcion1 = new System.Windows.Forms.Button();
+            this.lblPregunta = new System.Windows.Forms.Label();
             this.SuspendLayout();
-
-            // lblPregunta
-            this.lblPregunta.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-            this.lblPregunta.Location = new System.Drawing.Point(30, 20);
-            this.lblPregunta.Size = new System.Drawing.Size(740, 60);
-            this.lblPregunta.Text = "¿Pregunta?";
-
+            // 
             // lblTiempo
+            // 
             this.lblTiempo.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-            this.lblTiempo.Location = new System.Drawing.Point(30, 70);
+            this.lblTiempo.Location = new System.Drawing.Point(29, 365);
+            this.lblTiempo.Name = "lblTiempo";
             this.lblTiempo.Size = new System.Drawing.Size(740, 25);
+            this.lblTiempo.TabIndex = 1;
             this.lblTiempo.Text = "Tiempo restante:";
-
+            // 
             // lblResultadoFinal
+            // 
             this.lblResultadoFinal.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.lblResultadoFinal.Location = new System.Drawing.Point(30, 450);
+            this.lblResultadoFinal.Location = new System.Drawing.Point(30, 613);
+            this.lblResultadoFinal.Name = "lblResultadoFinal";
             this.lblResultadoFinal.Size = new System.Drawing.Size(740, 30);
-
-            // Botón 0
-            this.btnOpciones[0].Location = new System.Drawing.Point(30, 100);
-            this.btnOpciones[0].Size = new System.Drawing.Size(350, 50);
-            this.btnOpciones[0].Text = "Opción 1";
-            this.btnOpciones[0].Name = "btnOpcion0";
-
-            // Botón 1
-            this.btnOpciones[1].Location = new System.Drawing.Point(410, 100);
-            this.btnOpciones[1].Size = new System.Drawing.Size(350, 50);
-            this.btnOpciones[1].Text = "Opción 2";
-            this.btnOpciones[1].Name = "btnOpcion1";
-
-            // Botón 2
-            this.btnOpciones[2].Location = new System.Drawing.Point(30, 170);
-            this.btnOpciones[2].Size = new System.Drawing.Size(350, 50);
-            this.btnOpciones[2].Text = "Opción 3";
-            this.btnOpciones[2].Name = "btnOpcion2";
-
-            // Botón 3
-            this.btnOpciones[3].Location = new System.Drawing.Point(410, 170);
-            this.btnOpciones[3].Size = new System.Drawing.Size(350, 50);
-            this.btnOpciones[3].Text = "Opción 4";
-            this.btnOpciones[3].Name = "btnOpcion3";
-
+            this.lblResultadoFinal.TabIndex = 2;
+            // 
             // progressBar
-            this.progressBar.Location = new System.Drawing.Point(30, 240);
+            // 
+            this.progressBar.Location = new System.Drawing.Point(30, 403);
+            this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(740, 25);
-            this.progressBar.Maximum = 100;
-
+            this.progressBar.TabIndex = 3;
+            // 
             // lstResultados
+            // 
             this.lstResultados.FormattingEnabled = true;
-            this.lstResultados.ItemHeight = 20;
-            this.lstResultados.Location = new System.Drawing.Point(30, 280);
-            this.lstResultados.Size = new System.Drawing.Size(740, 160);
-
+            this.lstResultados.ItemHeight = 16;
+            this.lstResultados.Location = new System.Drawing.Point(30, 443);
+            this.lstResultados.Name = "lstResultados";
+            this.lstResultados.Size = new System.Drawing.Size(740, 148);
+            this.lstResultados.TabIndex = 4;
+            // 
+            // btnOpcion4
+            // 
+            this.btnOpcion4.BackColor = System.Drawing.Color.Green;
+            this.btnOpcion4.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+            this.btnOpcion4.ForeColor = System.Drawing.Color.White;
+            this.btnOpcion4.Location = new System.Drawing.Point(426, 245);
+            this.btnOpcion4.Name = "btnOpcion4";
+            this.btnOpcion4.Size = new System.Drawing.Size(320, 100);
+            this.btnOpcion4.TabIndex = 9;
+            this.btnOpcion4.Text = "Respuesta 4";
+            this.btnOpcion4.UseVisualStyleBackColor = false;
+            // 
+            // btnOpcion3
+            // 
+            this.btnOpcion3.BackColor = System.Drawing.Color.Gold;
+            this.btnOpcion3.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+            this.btnOpcion3.ForeColor = System.Drawing.Color.Black;
+            this.btnOpcion3.Location = new System.Drawing.Point(46, 245);
+            this.btnOpcion3.Name = "btnOpcion3";
+            this.btnOpcion3.Size = new System.Drawing.Size(320, 100);
+            this.btnOpcion3.TabIndex = 8;
+            this.btnOpcion3.Text = "Respuesta 3";
+            this.btnOpcion3.UseVisualStyleBackColor = false;
+            // 
+            // btnOpcion2
+            // 
+            this.btnOpcion2.BackColor = System.Drawing.Color.Blue;
+            this.btnOpcion2.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+            this.btnOpcion2.ForeColor = System.Drawing.Color.White;
+            this.btnOpcion2.Location = new System.Drawing.Point(426, 115);
+            this.btnOpcion2.Name = "btnOpcion2";
+            this.btnOpcion2.Size = new System.Drawing.Size(320, 100);
+            this.btnOpcion2.TabIndex = 7;
+            this.btnOpcion2.Text = "Respuesta 2";
+            this.btnOpcion2.UseVisualStyleBackColor = false;
+            // 
+            // btnOpcion1
+            // 
+            this.btnOpcion1.BackColor = System.Drawing.Color.Red;
+            this.btnOpcion1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+            this.btnOpcion1.ForeColor = System.Drawing.Color.White;
+            this.btnOpcion1.Location = new System.Drawing.Point(46, 115);
+            this.btnOpcion1.Name = "btnOpcion1";
+            this.btnOpcion1.Size = new System.Drawing.Size(320, 100);
+            this.btnOpcion1.TabIndex = 6;
+            this.btnOpcion1.Text = "Respuesta 1";
+            this.btnOpcion1.UseVisualStyleBackColor = false;
+            // 
+            // lblPregunta
+            // 
+            this.lblPregunta.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
+            this.lblPregunta.Location = new System.Drawing.Point(46, 15);
+            this.lblPregunta.Name = "lblPregunta";
+            this.lblPregunta.Size = new System.Drawing.Size(700, 80);
+            this.lblPregunta.TabIndex = 5;
+            this.lblPregunta.Text = "Aquí aparecerá la pregunta";
+            this.lblPregunta.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // FrmPregunta
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            // 
+            this.ClientSize = new System.Drawing.Size(791, 655);
+            this.Controls.Add(this.btnOpcion4);
+            this.Controls.Add(this.btnOpcion3);
+            this.Controls.Add(this.btnOpcion2);
+            this.Controls.Add(this.btnOpcion1);
             this.Controls.Add(this.lblPregunta);
+            this.Controls.Add(this.lblTiempo);
+            this.Controls.Add(this.lblResultadoFinal);
             this.Controls.Add(this.progressBar);
             this.Controls.Add(this.lstResultados);
-            this.Controls.Add(this.btnOpciones[0]);
-            this.Controls.Add(this.btnOpciones[1]);
-            this.Controls.Add(this.btnOpciones[2]);
-            this.Controls.Add(this.btnOpciones[3]);
             this.Name = "FrmPregunta";
             this.Text = "Pregunta Actual";
+            this.Load += new System.EventHandler(this.FrmPregunta_Load);
             this.ResumeLayout(false);
+
         }
+
+        private System.Windows.Forms.Button btnOpcion4;
+        private System.Windows.Forms.Button btnOpcion3;
+        private System.Windows.Forms.Button btnOpcion2;
+        private System.Windows.Forms.Button btnOpcion1;
+        private System.Windows.Forms.Label lblPregunta;
     }
 }

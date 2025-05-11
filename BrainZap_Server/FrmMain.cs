@@ -1,4 +1,5 @@
 ﻿using BrainZap_Server.CLASSES;
+using BrainZap_Server.FORMULARIOS;
 using System;
 using System.Linq;
 using System.Net;
@@ -37,7 +38,31 @@ namespace BrainZap_Server
         private void btnIniciarPartida_Click(object sender, EventArgs e)
         {
             gestorPreguntas = new ClPreguntas(rutaPreguntas);
-            EnviarSiguientePregunta();
+            // Muestra el formulario de pregunta
+            FrmPregunta frmPregunta = new FrmPregunta
+            {
+                PreguntaActual = gestorPreguntas.ObtenerSiguiente(),
+                Jugadores = socketServidor.ObtenerJugadores()
+            };
+            frmPregunta.FormClosed += FrmPregunta_FormClosed;
+            frmPregunta.Show();
+        }
+
+        private void FrmPregunta_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            // Cuando se cierra FrmPregunta, comprobar si ya se han terminado todas las preguntas
+            var pregunta = gestorPreguntas.ObtenerSiguiente();
+            if (pregunta == null)
+            {
+                // Si no hay más preguntas, muestra el formulario de resultados
+                FrmRanking frmRanking = new FrmRanking(socketServidor.ObtenerJugadores());
+                frmRanking.Show();
+            }
+            else
+            {
+                // Si hay más preguntas, envía la siguiente
+                EnviarSiguientePregunta();
+            }
         }
 
         private void EnviarSiguientePregunta()
@@ -59,8 +84,6 @@ namespace BrainZap_Server
             string mensaje = $"PREGUNTA|{pregunta.Texto}|{string.Join("|", pregunta.Opciones)}";
             socketServidor.EnviarATodos(mensaje);
             Log($"Enviada pregunta: {pregunta.Texto}");
-
-            // Aquí puedes lanzar un timer o esperar respuestas manualmente si no haces temporizador
         }
 
         private void ProcesarMensaje(string mensaje, TcpClient cliente)

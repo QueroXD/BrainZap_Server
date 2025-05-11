@@ -26,10 +26,11 @@ namespace BrainZap_Server.FORMULARIOS
             lblPregunta.Text = PreguntaActual.Texto;
             lblTiempo.Text = $"Tiempo restante: {tiempoRestante}s";
 
-            for (int i = 0; i < PreguntaActual.Opciones.Count; i++)
-            {
-                btnOpciones[i].Text = PreguntaActual.Opciones[i];
-            }
+            // Asignar las opciones a los botones
+            if (PreguntaActual.Opciones.Count > 0) btnOpcion1.Text = PreguntaActual.Opciones[0];
+            if (PreguntaActual.Opciones.Count > 1) btnOpcion2.Text = PreguntaActual.Opciones[1];
+            if (PreguntaActual.Opciones.Count > 2) btnOpcion3.Text = PreguntaActual.Opciones[2];
+            if (PreguntaActual.Opciones.Count > 3) btnOpcion4.Text = PreguntaActual.Opciones[3];
 
             progressBar.Maximum = tiempoRestante;
             progressBar.Value = tiempoRestante;
@@ -40,20 +41,14 @@ namespace BrainZap_Server.FORMULARIOS
             timer.Start();
         }
 
+
         private void Timer_Tick(object sender, EventArgs e)
         {
             tiempoRestante--;
             lblTiempo.Text = $"Tiempo restante: {tiempoRestante}s";
             progressBar.Value = Math.Max(0, tiempoRestante);
 
-            if (tiempoRestante <= 0)
-            {
-                timer.Stop();
-                MostrarResultados();
-            }
-
-            // Si todos respondieron antes del tiempo
-            if (Jugadores.All(j => j.YaRespondio))
+            if (tiempoRestante <= 0 || Jugadores.All(j => j.YaRespondio))
             {
                 timer.Stop();
                 MostrarResultados();
@@ -64,6 +59,7 @@ namespace BrainZap_Server.FORMULARIOS
         {
             Dictionary<int, int> conteo = new Dictionary<int, int>();
 
+            // Contar respuestas de los jugadores
             for (int i = 0; i < PreguntaActual.Opciones.Count; i++)
                 conteo[i] = 0;
 
@@ -85,5 +81,6 @@ namespace BrainZap_Server.FORMULARIOS
 
             lblResultadoFinal.Text = $"Respuesta correcta: {PreguntaActual.Opciones[PreguntaActual.Correcta]}";
         }
+
     }
 }
