@@ -1,13 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace BrainZap_Server.CLASSES
 {
-    internal class ClPreguntas
+    public class ClPregunta
     {
-        //Representa una pregunta con sus respuestas y la correcta.
+        public string Texto { get; set; }
+        public List<string> Opciones { get; set; }
+        public int Correcta { get; set; }
+    }
+
+    public class ClPreguntas
+    {
+        private List<ClPregunta> preguntas;
+        private int indiceActual = 0;
+
+        public ClPreguntas(string rutaArchivoJson)
+        {
+            string json = File.ReadAllText(rutaArchivoJson);
+            preguntas = JsonConvert.DeserializeObject<List<ClPregunta>>(json);
+        }
+
+        public ClPregunta ObtenerSiguiente()
+        {
+            if (indiceActual >= preguntas.Count) return null;
+            return preguntas[indiceActual++];
+        }
+
+        public void Reset()
+        {
+            indiceActual = 0;
+        }
     }
 }
