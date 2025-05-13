@@ -22,6 +22,7 @@
             this.lstJugadores = new System.Windows.Forms.ListBox();
             this.btnEscuchar = new System.Windows.Forms.Button();
             this.btnIniciar = new System.Windows.Forms.Button();
+            this.listLog = new System.Windows.Forms.ListBox();
             this.SuspendLayout();
             // 
             // lblIp
@@ -48,12 +49,12 @@
             this.lstJugadores.ItemHeight = 16;
             this.lstJugadores.Location = new System.Drawing.Point(20, 60);
             this.lstJugadores.Name = "lstJugadores";
-            this.lstJugadores.Size = new System.Drawing.Size(300, 260);
+            this.lstJugadores.Size = new System.Drawing.Size(324, 100);
             this.lstJugadores.TabIndex = 1;
             // 
             // btnEscuchar
             // 
-            this.btnEscuchar.Location = new System.Drawing.Point(350, 60);
+            this.btnEscuchar.Location = new System.Drawing.Point(410, 60);
             this.btnEscuchar.Name = "btnEscuchar";
             this.btnEscuchar.Size = new System.Drawing.Size(150, 40);
             this.btnEscuchar.TabIndex = 2;
@@ -63,7 +64,7 @@
             // 
             // btnIniciar
             // 
-            this.btnIniciar.Location = new System.Drawing.Point(350, 120);
+            this.btnIniciar.Location = new System.Drawing.Point(410, 120);
             this.btnIniciar.Name = "btnIniciar";
             this.btnIniciar.Size = new System.Drawing.Size(150, 40);
             this.btnIniciar.TabIndex = 3;
@@ -71,9 +72,19 @@
             this.btnIniciar.UseVisualStyleBackColor = true;
             this.btnIniciar.Click += new System.EventHandler(this.btnIniciarPartida_Click);
             // 
+            // listLog
+            // 
+            this.listLog.FormattingEnabled = true;
+            this.listLog.ItemHeight = 16;
+            this.listLog.Location = new System.Drawing.Point(20, 172);
+            this.listLog.Name = "listLog";
+            this.listLog.Size = new System.Drawing.Size(592, 164);
+            this.listLog.TabIndex = 4;
+            // 
             // FrmMain
             // 
-            this.ClientSize = new System.Drawing.Size(540, 350);
+            this.ClientSize = new System.Drawing.Size(628, 350);
+            this.Controls.Add(this.listLog);
             this.Controls.Add(this.lblIp);
             this.Controls.Add(this.lstJugadores);
             this.Controls.Add(this.btnEscuchar);
@@ -84,5 +95,7 @@
             this.PerformLayout();
 
         }
+
+        private System.Windows.Forms.ListBox listLog;
     }
 }

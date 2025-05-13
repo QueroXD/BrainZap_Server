@@ -29,9 +29,11 @@ namespace BrainZap_Server.CLASSES
             return preguntas[indiceActual++];
         }
 
-        public void Reset()
+        // Obtener la pregunta en formato "PREGUNTA|pregunta|opcion1|opcion2|opcion3|opcion4"
+        public string ObtenerPreguntaFormateada(ClPregunta preguntaActual)
         {
-            indiceActual = 0;
+            string opciones = string.Join("|", preguntaActual.Opciones);
+            return $"PREGUNTA|{preguntaActual.Texto}|{opciones}";
         }
     }
 }

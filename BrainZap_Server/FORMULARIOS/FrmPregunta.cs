@@ -10,19 +10,28 @@ namespace BrainZap_Server.FORMULARIOS
 {
     public partial class FrmPregunta : Form
     {
+        public ClPreguntas GestorPreguntas { get; set; }
         public ClPregunta PreguntaActual { get; set; }
-        public List<ClJugador> Jugadores { get; set; }
+        public ClSocketServidor SocketServidor { get; set; }
 
         private Timer timer;
-        private int tiempoRestante = 10; // en segundos
+        private int tiempoRestante = 30; // en segundos
 
-        public FrmPregunta()
+        public FrmPregunta(ClPregunta pregunta,ClSocketServidor socketServidor, ClPreguntas gestorPreguntas)
         {
             InitializeComponent();
+            SocketServidor = socketServidor;
+            PreguntaActual = pregunta;
+            GestorPreguntas = gestorPreguntas;
         }
 
         private void FrmPregunta_Load(object sender, EventArgs e)
         {
+            // enviar la pregunta a todos los jugadores
+            string mensaje = GestorPreguntas.ObtenerPreguntaFormateada(PreguntaActual);
+            SocketServidor.EnviarMensaje(mensaje);
+
+            // Configurar el formulario
             lblPregunta.Text = PreguntaActual.Texto;
             lblTiempo.Text = $"Tiempo restante: {tiempoRestante}s";
 
@@ -41,46 +50,16 @@ namespace BrainZap_Server.FORMULARIOS
             timer.Start();
         }
 
-
         private void Timer_Tick(object sender, EventArgs e)
         {
             tiempoRestante--;
             lblTiempo.Text = $"Tiempo restante: {tiempoRestante}s";
             progressBar.Value = Math.Max(0, tiempoRestante);
 
-            if (tiempoRestante <= 0 || Jugadores.All(j => j.YaRespondio))
+            if (tiempoRestante <= 0)
             {
                 timer.Stop();
-                MostrarResultados();
             }
         }
-
-        private void MostrarResultados()
-        {
-            Dictionary<int, int> conteo = new Dictionary<int, int>();
-
-            // Contar respuestas de los jugadores
-            for (int i = 0; i < PreguntaActual.Opciones.Count; i++)
-                conteo[i] = 0;
-
-            foreach (var jugador in Jugadores)
-            {
-                if (jugador.UltimaRespuesta >= 0 && conteo.ContainsKey(jugador.UltimaRespuesta))
-                    conteo[jugador.UltimaRespuesta]++;
-            }
-
-            lstResultados.Items.Clear();
-            for (int i = 0; i < PreguntaActual.Opciones.Count; i++)
-            {
-                string texto = $"{PreguntaActual.Opciones[i]}: {conteo[i]} jugador(es)";
-                lstResultados.Items.Add(texto);
-
-                if (i == PreguntaActual.Correcta)
-                    lstResultados.Items[lstResultados.Items.Count - 1] += " ✅";
-            }
-
-            lblResultadoFinal.Text = $"Respuesta correcta: {PreguntaActual.Opciones[PreguntaActual.Correcta]}";
-        }
-
     }
 }
