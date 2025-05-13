@@ -78,12 +78,12 @@
             this.listLog.ItemHeight = 16;
             this.listLog.Location = new System.Drawing.Point(20, 172);
             this.listLog.Name = "listLog";
-            this.listLog.Size = new System.Drawing.Size(592, 164);
+            this.listLog.Size = new System.Drawing.Size(1246, 164);
             this.listLog.TabIndex = 4;
             // 
             // FrmMain
             // 
-            this.ClientSize = new System.Drawing.Size(628, 350);
+            this.ClientSize = new System.Drawing.Size(1278, 350);
             this.Controls.Add(this.listLog);
             this.Controls.Add(this.lblIp);
             this.Controls.Add(this.lstJugadores);

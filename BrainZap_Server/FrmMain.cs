@@ -19,24 +19,32 @@ namespace BrainZap_Server
         public FrmMain()
         {
             InitializeComponent();
-            socketServidor = new ClSocketServidor(jugadores, this);
-            socketServidor.IniciarEscucha();
+            socketServidor = new ClSocketServidor(this, jugadores);
         }
 
         private void btnEscuchar_Click(object sender, EventArgs e)
         {
             string ip = ObtenerIPLocal();
+            socketServidor.Iniciar();
             lblIp.Text = $"IP Servidor: {ip}";
             btnEscuchar.Enabled = false;
         }
 
         private void btnIniciarPartida_Click(object sender, EventArgs e)
         {
-            gestorPreguntas = new ClPreguntas(rutaPreguntas);
+            if (jugadores.Count > 0)
+            {
+                gestorPreguntas = new ClPreguntas(rutaPreguntas);
 
-            ClPregunta pregunta = gestorPreguntas.ObtenerSiguiente();
-            FrmPregunta frmPregunta = new FrmPregunta(pregunta, socketServidor, gestorPreguntas);
-            frmPregunta.Show();
+                ClPregunta pregunta = gestorPreguntas.ObtenerSiguiente();
+                FrmPregunta frmPregunta = new FrmPregunta(pregunta, socketServidor, gestorPreguntas);
+                frmPregunta.PreguntasCerrado += FrmPreguntasCerradoHandler;
+                frmPregunta.Show();
+            }
+            else
+            {
+                MessageBox.Show("No hay jugadores conectados.");
+            }
         }
 
         public void Log(string mensaje)
@@ -62,6 +70,13 @@ namespace BrainZap_Server
                     return ip.ToString();
             }
             return "127.0.0.1";
+        }
+
+        // Cuando el formulario de preguntas se cierra, se abre el formulario FrmRanking
+        private void FrmPreguntasCerradoHandler(object sender, EventArgs e)
+        {
+            FrmRanking frmRanking = new FrmRanking();
+            frmRanking.Show();
         }
     }
 }

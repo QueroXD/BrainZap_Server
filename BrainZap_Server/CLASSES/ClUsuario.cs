@@ -1,17 +1,20 @@
-﻿using System.Net;
+﻿using System.Net.Sockets;
+using System.Net;
+using System;
 
-namespace BrainZap_Server.CLASSES
+public class ClUsuario
 {
-    public class ClUsuario
-    {
-        public string Nickname { get; set; }
-        public IPEndPoint IP { get; set; }
-        public int Puntos { get; set; } = 0;
+    public string Nickname { get; set; }
+    public string IP { get; set; }
+    public int Puerto { get; set; }
 
-        public ClUsuario(string nickname, string ip, int puerto = 5555)
-        {
-            Nickname = nickname;
-            IP = new IPEndPoint(IPAddress.Parse(ip), puerto);
-        }
+    public int Puntos { get; set; } = 0;
+
+    public ClUsuario(string nickname, string ip, int puerto)
+    {
+        Nickname = nickname;
+        IP = ip;
+        Puerto = puerto;
     }
 }
+

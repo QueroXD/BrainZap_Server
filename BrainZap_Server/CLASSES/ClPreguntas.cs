@@ -35,5 +35,23 @@ namespace BrainZap_Server.CLASSES
             string opciones = string.Join("|", preguntaActual.Opciones);
             return $"PREGUNTA|{preguntaActual.Texto}|{opciones}";
         }
+
+        // Obtener la respuesta correcta enviando la pregunta
+        public string ObtenerRespuestaCorrecta(ClPregunta preguntaActual)
+        {
+            return preguntaActual.Opciones[preguntaActual.Correcta];
+        }
+
+        public ClPregunta ObtenerPreguntaPorTexto(string texto)
+        {
+            foreach (var pregunta in preguntas)
+            {
+                if (pregunta.Texto.Equals(texto, StringComparison.OrdinalIgnoreCase))
+                {
+                    return pregunta;
+                }
+            }
+            return null; // No se encontró la pregunta
+        }
     }
 }

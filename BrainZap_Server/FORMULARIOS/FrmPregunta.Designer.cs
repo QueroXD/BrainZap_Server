@@ -3,10 +3,8 @@
     partial class FrmPregunta
     {
         private System.ComponentModel.IContainer components = null;
-        private System.Windows.Forms.Label lblResultadoFinal;
         private System.Windows.Forms.Label lblTiempo;
         private System.Windows.Forms.ProgressBar progressBar;
-        private System.Windows.Forms.ListBox lstResultados;
 
         protected override void Dispose(bool disposing)
         {
@@ -17,14 +15,14 @@
         private void InitializeComponent()
         {
             this.lblTiempo = new System.Windows.Forms.Label();
-            this.lblResultadoFinal = new System.Windows.Forms.Label();
             this.progressBar = new System.Windows.Forms.ProgressBar();
-            this.lstResultados = new System.Windows.Forms.ListBox();
             this.btnOpcion4 = new System.Windows.Forms.Button();
             this.btnOpcion3 = new System.Windows.Forms.Button();
             this.btnOpcion2 = new System.Windows.Forms.Button();
             this.btnOpcion1 = new System.Windows.Forms.Button();
             this.lblPregunta = new System.Windows.Forms.Label();
+            this.lblResultadoFinal = new System.Windows.Forms.Label();
+            this.btnSiguiente = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lblTiempo
@@ -36,29 +34,12 @@
             this.lblTiempo.TabIndex = 1;
             this.lblTiempo.Text = "Tiempo restante:";
             // 
-            // lblResultadoFinal
-            // 
-            this.lblResultadoFinal.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.lblResultadoFinal.Location = new System.Drawing.Point(30, 613);
-            this.lblResultadoFinal.Name = "lblResultadoFinal";
-            this.lblResultadoFinal.Size = new System.Drawing.Size(740, 30);
-            this.lblResultadoFinal.TabIndex = 2;
-            // 
             // progressBar
             // 
             this.progressBar.Location = new System.Drawing.Point(30, 403);
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(740, 25);
             this.progressBar.TabIndex = 3;
-            // 
-            // lstResultados
-            // 
-            this.lstResultados.FormattingEnabled = true;
-            this.lstResultados.ItemHeight = 16;
-            this.lstResultados.Location = new System.Drawing.Point(30, 443);
-            this.lstResultados.Name = "lstResultados";
-            this.lstResultados.Size = new System.Drawing.Size(740, 148);
-            this.lstResultados.TabIndex = 4;
             // 
             // btnOpcion4
             // 
@@ -118,9 +99,28 @@
             this.lblPregunta.Text = "Aquí aparecerá la pregunta";
             this.lblPregunta.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // lblResultadoFinal
+            // 
+            this.lblResultadoFinal.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.lblResultadoFinal.Location = new System.Drawing.Point(30, 445);
+            this.lblResultadoFinal.Name = "lblResultadoFinal";
+            this.lblResultadoFinal.Size = new System.Drawing.Size(641, 30);
+            this.lblResultadoFinal.TabIndex = 2;
+            // 
+            // btnSiguiente
+            // 
+            this.btnSiguiente.Location = new System.Drawing.Point(677, 434);
+            this.btnSiguiente.Name = "btnSiguiente";
+            this.btnSiguiente.Size = new System.Drawing.Size(93, 48);
+            this.btnSiguiente.TabIndex = 10;
+            this.btnSiguiente.Text = "Siguiente Pregunta";
+            this.btnSiguiente.UseVisualStyleBackColor = true;
+            this.btnSiguiente.Click += new System.EventHandler(this.btnSiguiente_Click);
+            // 
             // FrmPregunta
             // 
-            this.ClientSize = new System.Drawing.Size(791, 655);
+            this.ClientSize = new System.Drawing.Size(791, 495);
+            this.Controls.Add(this.btnSiguiente);
             this.Controls.Add(this.btnOpcion4);
             this.Controls.Add(this.btnOpcion3);
             this.Controls.Add(this.btnOpcion2);
@@ -129,9 +129,12 @@
             this.Controls.Add(this.lblTiempo);
             this.Controls.Add(this.lblResultadoFinal);
             this.Controls.Add(this.progressBar);
-            this.Controls.Add(this.lstResultados);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "FrmPregunta";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Pregunta Actual";
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FrmPregunta_FormClosed);
             this.Load += new System.EventHandler(this.FrmPregunta_Load);
             this.ResumeLayout(false);
 
@@ -142,5 +145,7 @@
         private System.Windows.Forms.Button btnOpcion2;
         private System.Windows.Forms.Button btnOpcion1;
         private System.Windows.Forms.Label lblPregunta;
+        private System.Windows.Forms.Label lblResultadoFinal;
+        private System.Windows.Forms.Button btnSiguiente;
     }
 }
