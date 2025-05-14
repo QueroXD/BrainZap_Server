@@ -24,6 +24,7 @@ namespace BrainZap_Server.FORMULARIOS
             SocketServidor = socketServidor;
             PreguntaActual = pregunta;
             GestorPreguntas = gestorPreguntas;
+            this.Resize += (s, e) => ResponsiveForm();
         }
 
         private void FrmPregunta_Load(object sender, EventArgs e)
@@ -49,25 +50,26 @@ namespace BrainZap_Server.FORMULARIOS
 
             timer = new Timer();
             timer.Interval = 1000;
-            timer.Tick += Timer_Tick;
+            timer.Tick += timer_Tick;
             timer.Start();
         }
 
-        private void Timer_Tick(object sender, EventArgs e)
+        private void timer_Tick(object sender, EventArgs e)
         {
             tiempoRestante--;
-            lblTiempo.Text = $"Tiempo restante: {tiempoRestante}s";
-            progressBar.Value = Math.Max(0, tiempoRestante);
+            progressBar.Value = tiempoRestante;
+            lblTiempo.Text = $"{tiempoRestante}s";
 
             if (tiempoRestante <= 0)
             {
-                btnSiguiente.Visible = true;
-                lblTiempo.Text = "Tiempo agotado!";
-                lblTiempo.ForeColor = Color.Red;
-                lblResultadoFinal.Text = $"Respuesta correcta: {GestorPreguntas.ObtenerRespuestaCorrecta(PreguntaActual)}";
                 timer.Stop();
+                lblResultadoFinal.Text = $"Tiempo agotado. Respuesta correcta: {GestorPreguntas.ObtenerRespuestaCorrecta(PreguntaActual)}";
+                btnSiguiente.Visible = true;
+
+                SocketServidor.EvaluarYEnviarResultados(PreguntaActual.Texto); // <<<<< ESTE LLAMADO
             }
         }
+
 
         private void btnSiguiente_Click(object sender, EventArgs e)
         {
@@ -93,7 +95,7 @@ namespace BrainZap_Server.FORMULARIOS
 
                 timer = new Timer();
                 timer.Interval = 1000;
-                timer.Tick += Timer_Tick;
+                timer.Tick += timer_Tick;
                 timer.Start();
             }
             else
@@ -104,24 +106,69 @@ namespace BrainZap_Server.FORMULARIOS
 
         private void ResponsiveForm()
         {
-            if (this.Controls.Count == 0) return;
+            int formWidth = this.ClientSize.Width;
+            int formHeight = this.ClientSize.Height;
 
-            // Calcular el área total ocupada por los controles
-            Rectangle bounds = this.Controls[0].Bounds;
+            // Centrar lblPregunta arriba
+            lblPregunta.Left = (formWidth - lblPregunta.Width) / 2;
+            lblPregunta.Top = 30;
 
-            foreach (Control control in this.Controls)
+            // Posicionamiento horizontal de botones en dos columnas
+            int spacing = 40;
+            int buttonWidth = btnOpcion1.Width;
+            int buttonHeight = btnOpcion1.Height;
+            int totalButtonHeight = buttonHeight * 2 + spacing;
+
+            int topButtonsY = (formHeight - totalButtonHeight) / 2;
+
+            // Primera fila
+            btnOpcion1.Left = (formWidth / 2) - buttonWidth - spacing / 2;
+            btnOpcion1.Top = topButtonsY;
+
+            btnOpcion2.Left = (formWidth / 2) + spacing / 2;
+            btnOpcion2.Top = topButtonsY;
+
+            // Segunda fila
+            btnOpcion3.Left = btnOpcion1.Left;
+            btnOpcion3.Top = btnOpcion1.Bottom + spacing;
+
+            btnOpcion4.Left = btnOpcion2.Left;
+            btnOpcion4.Top = btnOpcion2.Bottom + spacing;
+
+            // Tiempo y barra de progreso
+            lblTiempo.Left = (formWidth - lblTiempo.Width) / 2;
+            lblTiempo.Top = formHeight - 100;
+
+            progressBar.Left = (formWidth - progressBar.Width) / 2;
+            progressBar.Top = lblTiempo.Bottom + 5;
+
+            lblResultadoFinal.Left = progressBar.Left;
+            lblResultadoFinal.Top = progressBar.Bottom + 5;
+
+            // Botón siguiente alineado a la derecha
+            btnSiguiente.Left = formWidth - btnSiguiente.Width - 30;
+            btnSiguiente.Top = formHeight - btnSiguiente.Height - 20;
+        }
+
+        public void ForzarFinDePreguntaDesdeServidor()
+        {
+            if (InvokeRequired)
             {
-                bounds = Rectangle.Union(bounds, control.Bounds);
+                BeginInvoke(new Action(ForzarFinDePreguntaDesdeServidor));
+                return;
             }
 
-            // Calcular el desplazamiento para centrar los controles
-            int offsetX = (this.ClientSize.Width - bounds.Width) / 2 - bounds.X;
-            int offsetY = (this.ClientSize.Height - bounds.Height) / 2 - bounds.Y;
-
-            // Mover los controles
-            foreach (Control control in this.Controls)
+            if (timer.Enabled)
             {
-                control.Location = new Point(control.Location.X + offsetX, control.Location.Y + offsetY);
+                timer.Stop();
+                tiempoRestante = 0;
+                lblTiempo.Text = "Todos han respondido!";
+                lblTiempo.ForeColor = Color.Green;
+                progressBar.Value = 0;
+                lblResultadoFinal.Text = $"Respuesta correcta: {GestorPreguntas.ObtenerRespuestaCorrecta(PreguntaActual)}";
+                btnSiguiente.Visible = true;
+
+                SocketServidor.EvaluarYEnviarResultados(PreguntaActual.Texto);
             }
         }
 

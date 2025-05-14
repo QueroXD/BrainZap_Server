@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BrainZap_Server.FORMULARIOS;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -14,6 +15,10 @@ namespace BrainZap_Server.CLASSES
         private List<ClUsuario> jugadores = new List<ClUsuario>();
         private ClPreguntas preguntas;
         private FrmMain _frm;
+        private FrmPregunta _frmPregunta;
+        private Dictionary<string, List<string>> respuestasPorPregunta = new Dictionary<string, List<string>>();
+        private Dictionary<(string preguntaTexto, string nick), string> respuestasIndividuales = new Dictionary<(string preguntaTexto, string nick), string>();
+
 
         public ClSocketServidor(FrmMain frm, List<ClUsuario> jugadoresExternos)
         {
@@ -51,28 +56,36 @@ namespace BrainZap_Server.CLASSES
             {
                 NetworkStream stream = cliente.GetStream();
                 byte[] buffer = new byte[1024];
-                int leido = stream.Read(buffer, 0, buffer.Length);
-                string mensaje = Encoding.UTF8.GetString(buffer, 0, leido);
 
-                if (mensaje.StartsWith("NICK"))
+                while (true)
                 {
-                    GestionarNick(mensaje);
-                }
-                else if (mensaje.StartsWith("RESPUESTA"))
-                {
-                    _frm.Log($"SRV | Respuesta recibida: {mensaje}");
-                    GestionarRespuesta(mensaje);
+                    int leido = stream.Read(buffer, 0, buffer.Length);
+                    if (leido == 0)
+                        break; // El cliente cerró la conexión
+
+                    string mensaje = Encoding.UTF8.GetString(buffer, 0, leido);
+
+                    if (mensaje.StartsWith("NICK"))
+                    {
+                        GestionarNick(mensaje);
+                    }
+                    else if (mensaje.StartsWith("RESPUESTA"))
+                    {
+                        _frm.Log($"SRV | Respuesta recibida: {mensaje}");
+                        GestionarRespuesta(mensaje);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                _frm.Log($"SRV | Error al recibir mensaje: {ex.Message}");
+                _frm.Log($"SRV | ERROR al recibir mensaje: {ex.Message}");
             }
             finally
             {
-                cliente.Close(); // Cerramos siempre, solo al final
+                cliente.Close(); // Solo se cierra cuando el cliente desconecta
             }
         }
+
 
 
         private void GestionarNick(string mensaje)
@@ -98,6 +111,7 @@ namespace BrainZap_Server.CLASSES
                 ClUsuario nuevo = new ClUsuario(nick, ip, puerto);
                 jugadores.Add(nuevo);
                 EnviarRespuestaNick(ip, puerto, $"NICK|{nick}|OK");
+                _frm.MostrarJugadores();
                 _frm.Log($"SRV | Jugador registrado: {nick} ({ip}:{puerto})");
             }
         }
@@ -113,9 +127,7 @@ namespace BrainZap_Server.CLASSES
 
             string nick = partes[1];
             string textoPregunta = partes[2];
-            string respuestaUsuario = partes[3];
-
-            int puntosGanados = 0;
+            string respuestaUsuario = partes[3].Trim();
 
             var jugador = jugadores.FirstOrDefault(j => j.Nickname == nick);
             if (jugador == null)
@@ -124,23 +136,94 @@ namespace BrainZap_Server.CLASSES
                 return;
             }
 
-            string respuestaCorrecta = preguntas.ObtenerRespuestaCorrecta(preguntas.ObtenerPreguntaPorTexto(textoPregunta));
-            if (respuestaUsuario == respuestaCorrecta)
+            var pregunta = preguntas.ObtenerPreguntaPorTexto(textoPregunta);
+            if (pregunta == null)
             {
-                puntosGanados = 10;
-                jugador.Puntos += puntosGanados;
+                _frm.Log($"SRV | Pregunta no encontrada: {textoPregunta}");
+                return;
             }
 
-            // Construimos ranking ordenado
-            var topRanking = jugadores
-                .OrderByDescending(j => j.Puntos)
-                .Take(3)
-                .Select(j => $"{j.Nickname}:{j.Puntos}")
-                .ToList();
+            lock (respuestasPorPregunta)
+            {
+                if (!respuestasPorPregunta.ContainsKey(textoPregunta))
+                    respuestasPorPregunta[textoPregunta] = new List<string>();
 
-            string resultado = $"RESULTADO|{nick}|{respuestaUsuario}|{jugador.Puntos}|{string.Join(",", topRanking)}";
-            EnviarResultado(jugador.IP, jugador.Puerto, resultado);
-            _frm.Log($"SRV | Resultado enviado a {jugador.Nickname}: {resultado}");
+                var lista = respuestasPorPregunta[textoPregunta];
+
+                if (!lista.Contains(nick))
+                {
+                    lista.Add(nick);
+                    respuestasIndividuales[(textoPregunta, nick)] = respuestaUsuario;
+                }
+
+                if (lista.Count == jugadores.Count)
+                {
+                    _frm.Log("SRV | Todos los jugadores han respondido.");
+                    _frmPregunta.ForzarFinDePreguntaDesdeServidor(); // ← Avisamos al FrmPregunta
+                }
+            }
+        }
+
+        public void EvaluarYEnviarResultados(string textoPregunta)
+        {
+            var pregunta = preguntas.ObtenerPreguntaPorTexto(textoPregunta);
+            if (pregunta == null) return;
+
+            string respuestaCorrecta = preguntas.ObtenerRespuestaCorrecta(pregunta);
+
+            Dictionary<string, (string estado, int puntos)> resultadosPorJugador = new Dictionary<string, (string estado, int puntos)>();
+
+            lock (respuestasPorPregunta)
+            {
+                var lista = respuestasPorPregunta.ContainsKey(textoPregunta)
+                    ? respuestasPorPregunta[textoPregunta]
+                    : new List<string>();
+
+                // 1️⃣ Evaluar y almacenar los resultados SIN enviar aún
+                foreach (var jugador in jugadores)
+                {
+                    string nick = jugador.Nickname;
+                    string respuestaUsuario = respuestasIndividuales.ContainsKey((textoPregunta, nick))
+                        ? respuestasIndividuales[(textoPregunta, nick)]
+                        : "";
+
+                    string estado = "INCORRECTA";
+                    int puntos = 0;
+
+                    if (respuestaUsuario == respuestaCorrecta)
+                    {
+                        int ordenRespuesta = lista.IndexOf(nick);
+                        puntos = Math.Max(25, 200 - (ordenRespuesta * 25));
+                        estado = "CORRECTO";
+                    }
+
+                    resultadosPorJugador[nick] = (estado, puntos);
+                }
+
+                // 2️⃣ Asignar los puntos después de evaluar todo
+                foreach (var jugador in jugadores)
+                {
+                    jugador.Puntos += resultadosPorJugador[jugador.Nickname].puntos;
+                }
+
+                // 3️⃣ Generar el ranking global UNA SOLA VEZ
+                var topRanking = jugadores
+                    .OrderByDescending(j => j.Puntos)
+                    .Take(3)
+                    .Select(j => $"{j.Nickname}:{j.Puntos}")
+                    .ToList();
+
+                // 4️⃣ Ahora sí, enviar resultados consistentes a todos
+                foreach (var jugador in jugadores)
+                {
+                    string nick = jugador.Nickname;
+                    var (estado, puntos) = resultadosPorJugador[nick];
+
+                    string resultado = $"RESULTADO|{nick}|{estado}|{puntos}|{string.Join(",", topRanking)}";
+                    EnviarResultado(jugador.IP, jugador.Puerto, resultado);
+                    _frm.Log($"SRV | Resultado enviado a {nick}: {resultado}");
+                }
+            }
         }
 
 
@@ -160,7 +243,7 @@ namespace BrainZap_Server.CLASSES
             }
             catch (Exception ex)
             {
-                _frm.Log($"SRV | Error enviando a {ip}:{puerto}: {ex.Message}");
+                _frm.Log($"SRV | ERROR enviando a {ip}:{puerto}: {ex.Message}");
             }
         }
 
@@ -179,10 +262,14 @@ namespace BrainZap_Server.CLASSES
             }
             catch (Exception ex)
             {
-                _frm.Log($"SRV | Error enviando resultado a {ip}:{puerto}: {ex.Message}");
+                _frm.Log($"SRV | ERROR enviando resultado a {ip}:{puerto}: {ex.Message}");
             }
         }
 
+        public void AsignarFrmPregunta(FrmPregunta frmPregunta)
+        {
+            _frmPregunta = frmPregunta;
+        }
 
         public void EnviarMensaje(string mensaje)
         {
@@ -205,14 +292,9 @@ namespace BrainZap_Server.CLASSES
                     }
                     catch (Exception ex)
                     {
-                        _frm.Log($"SRV | Error enviando pregunta a {jugador.Nickname}: {ex.Message}");
+                        _frm.Log($"SRV | ERROR enviando pregunta a {jugador.Nickname}: {ex.Message}");
                     }
                 }
-            }
-            else if (mensaje.StartsWith("RESULTADO"))
-            {
-                // Enviar el resultado a todos los jugadores
-                _frm.Log($"SRV | Resultado recibido: {mensaje}");
             }
         }
     }
