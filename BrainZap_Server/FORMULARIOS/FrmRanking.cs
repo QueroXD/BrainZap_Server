@@ -10,11 +10,14 @@ namespace BrainZap_Server.FORMULARIOS
     public partial class FrmRanking : Form
     {
         private List<ClUsuario> jugadores;
+        private ClSocketServidor servidor;
 
-        public FrmRanking(List<ClUsuario> jugadores)
+        public FrmRanking(List<ClUsuario> jugadores, ClSocketServidor servidor)
         {
             InitializeComponent();
             this.jugadores = jugadores;
+            this.servidor = servidor;
+
             this.Resize += (s, e) => ResponsiveForm();
         }
 
@@ -29,6 +32,18 @@ namespace BrainZap_Server.FORMULARIOS
                 lblTop2.Text = $"🥈 {topJugadores[1].Nickname} - {topJugadores[1].Puntos} puntos";
             if (topJugadores.Count > 2)
                 lblTop3.Text = $"🥉 {topJugadores[2].Nickname} - {topJugadores[2].Puntos} puntos";
+
+            // Generar mensaje FINPARTIDA
+            string mensajeFinal = "FINPARTIDA|" + string.Join(",", jugadores
+                .OrderByDescending(j => j.Puntos)
+                .Take(3)
+                .Select(j => $"{j.Nickname}:{j.Puntos}"));
+
+            // Enviar mensaje a todos
+            foreach (var jugador in jugadores)
+            {
+                servidor.EnviarMensajeIndividual(jugador.IP, jugador.Puerto, mensajeFinal);
+            }
 
             ResponsiveForm();
         }

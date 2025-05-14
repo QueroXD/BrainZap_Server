@@ -15,7 +15,7 @@ namespace BrainZap_Server
         private ClSocketServidor socketServidor;
         private ClPreguntas gestorPreguntas;
         private List<ClUsuario> jugadores = new List<ClUsuario>();
-        private string rutaPreguntas = "preguntas.json"; // Asegúrate de incluir este archivo
+        private string rutaPreguntas = "preguntas.json";
 
         public FrmMain()
         {
@@ -103,7 +103,7 @@ namespace BrainZap_Server
                 richLog.AppendText($"{DateTime.Now:HH:mm:ss} | {mensaje}\n");
                 richLog.SelectionColor = richLog.ForeColor;
 
-                richLog.ScrollToCaret(); // Scroll automático
+                richLog.ScrollToCaret();
             }
         }
 
@@ -123,7 +123,7 @@ namespace BrainZap_Server
         // Cuando el formulario de preguntas se cierra, se abre el formulario FrmRanking
         private void FrmPreguntasCerradoHandler(object sender, EventArgs e)
         {
-            FrmRanking frmRanking = new FrmRanking(jugadores);
+            FrmRanking frmRanking = new FrmRanking(jugadores, socketServidor);
             frmRanking.Show();
         }
 

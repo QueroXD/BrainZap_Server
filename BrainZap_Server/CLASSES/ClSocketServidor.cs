@@ -159,7 +159,7 @@ namespace BrainZap_Server.CLASSES
                 if (lista.Count == jugadores.Count)
                 {
                     _frm.Log("SRV | Todos los jugadores han respondido.");
-                    _frmPregunta.ForzarFinDePreguntaDesdeServidor(); // ← Avisamos al FrmPregunta
+                    _frmPregunta.ForzarFinDePreguntaDesdeServidor(); // Avisamos al FrmPregunta
                 }
             }
         }
@@ -179,7 +179,7 @@ namespace BrainZap_Server.CLASSES
                     ? respuestasPorPregunta[textoPregunta]
                     : new List<string>();
 
-                // 1️⃣ Evaluar y almacenar los resultados SIN enviar aún
+                // Evaluar y almacenar los resultados SIN enviar aún
                 foreach (var jugador in jugadores)
                 {
                     string nick = jugador.Nickname;
@@ -200,20 +200,20 @@ namespace BrainZap_Server.CLASSES
                     resultadosPorJugador[nick] = (estado, puntos);
                 }
 
-                // 2️⃣ Asignar los puntos después de evaluar todo
+                // Asignar los puntos después de evaluar todo
                 foreach (var jugador in jugadores)
                 {
                     jugador.Puntos += resultadosPorJugador[jugador.Nickname].puntos;
                 }
 
-                // 3️⃣ Generar el ranking global UNA SOLA VEZ
+                // Generar el ranking global UNA SOLA VEZ
                 var topRanking = jugadores
                     .OrderByDescending(j => j.Puntos)
                     .Take(3)
                     .Select(j => $"{j.Nickname}:{j.Puntos}")
                     .ToList();
 
-                // 4️⃣ Ahora sí, enviar resultados consistentes a todos
+                // Ahora sí, enviar resultados consistentes a todos
                 foreach (var jugador in jugadores)
                 {
                     string nick = jugador.Nickname;
@@ -269,6 +269,26 @@ namespace BrainZap_Server.CLASSES
         public void AsignarFrmPregunta(FrmPregunta frmPregunta)
         {
             _frmPregunta = frmPregunta;
+        }
+
+        public void EnviarMensajeIndividual(string ip, int puerto, string mensaje)
+        {
+            try
+            {
+                using (TcpClient cliente = new TcpClient())
+                {
+                    cliente.Connect(ip, puerto);
+                    NetworkStream stream = cliente.GetStream();
+                    byte[] data = Encoding.UTF8.GetBytes(mensaje);
+                    stream.Write(data, 0, data.Length);
+                    stream.Flush();
+                }
+                _frm.Log($"SRV | ENDGAME");
+            }
+            catch (Exception ex)
+            {
+                _frm.Log($"SRV | ERROR enviando FINPARTIDA a {ip}:{puerto}: {ex.Message}");
+            }
         }
 
         public void EnviarMensaje(string mensaje)
