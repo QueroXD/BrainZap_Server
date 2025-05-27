@@ -13,8 +13,9 @@ namespace BrainZap_Server.CLASSES
 {
     public class ClSocketServidor
     {
-        const string CERTIFICAT = @"C:\Users\Usuario\Documents\Educem\DAM\M9\elMeuCertificat.pfx";
+        const string CERTIFICAT = "elMeuCertificat.pfx";
         const string psw = "Educem00.";
+
         private TcpListener server;
         private List<ClUsuario> jugadores = new List<ClUsuario>();
         private ClPreguntas preguntas;
@@ -153,7 +154,8 @@ namespace BrainZap_Server.CLASSES
             {
                 if (jugadores.Any(j => j.Nickname == nick))
                 {
-                    EnviarPorStream(stream, $"NICK|{nick}|ERROR");
+                    mensaje = $"NICK|{nick}|ERROR";
+                    EnviarPorStream(ip, puerto, mensaje);
                     _frm.Log($"SRV | El nick {nick} ya está en uso.");
                 }
                 else
@@ -168,7 +170,9 @@ namespace BrainZap_Server.CLASSES
                     };
 
                     jugadores.Add(nuevo);
-                    EnviarPorStream(stream, $"NICK|{nick}|OK");
+                    mensaje = $"NICK|{nick}|OK";
+                    EnviarPorStream(ip, puerto, mensaje);
+
                     _frm.MostrarJugadores();
                     _frm.Log($"SRV | Jugador registrado: {nick} ({ip}:{puerto})");
                 }
@@ -280,28 +284,12 @@ namespace BrainZap_Server.CLASSES
             }
         }
 
-        private void EnviarPorStream(SslStream stream, string mensaje)
-        {
-            try
-            {
-                _frm.Log($"SRV | Enviando mensaje: {mensaje}");
-                byte[] data = Encoding.UTF8.GetBytes(mensaje);
-                stream.Write(data, 0, data.Length);
-                stream.Flush();
-                _frm.Log($"SRV | Mensaje enviado correctamente.");
-            }
-            catch (Exception ex)
-            {
-                _frm.Log($"SRV | ERROR al enviar por stream: {ex.Message}");
-            }
-        }
-
         private void EnviarResultado(string nick, string mensaje)
         {
             var jugador = jugadores.FirstOrDefault(j => j.Nickname == nick);
             if (jugador != null && jugador.Stream != null)
             {
-                EnviarPorStream(jugador.Stream, mensaje);
+                EnviarPorStream(jugador.IP, jugador.Puerto, mensaje);
                 _frm.Log($"SRV | Resultado enviado a {nick}: {mensaje}");
             }
             else
@@ -320,7 +308,7 @@ namespace BrainZap_Server.CLASSES
             var jugador = jugadores.FirstOrDefault(j => j.Nickname == nick);
             if (jugador != null && jugador.Stream != null)
             {
-                EnviarPorStream(jugador.Stream, mensaje);
+                EnviarPorStream(jugador.IP, jugador.Puerto, mensaje);
                 _frm.Log($"SRV | Mensaje individual enviado a {nick}: {mensaje}");
             }
             else
@@ -342,7 +330,7 @@ namespace BrainZap_Server.CLASSES
                     {
                         try
                         {
-                            EnviarPorStream(jugador.Stream, mensaje);
+                            EnviarPorStream(jugador.IP, jugador.Puerto, mensaje);
                             _frm.Log($"SRV | Pregunta enviada a {jugador.Nickname} ({jugador.IP}:{jugador.Puerto})");
                         }
                         catch (Exception ex)
@@ -351,6 +339,30 @@ namespace BrainZap_Server.CLASSES
                         }
                     }
                 }
+            }
+        }
+
+        private void EnviarPorStream(string ipDestino, int puertoDestino, string mensaje)
+        {
+            try
+            {
+                using (TcpClient cliente = new TcpClient())
+                {
+                    cliente.Connect(ipDestino, puertoDestino);
+                    using (SslStream sslStream = new SslStream(cliente.GetStream(), false, validarCertificat))
+                    {
+                        sslStream.AuthenticateAsClient(ipDestino);
+                        byte[] data = Encoding.UTF8.GetBytes(mensaje + "\n");
+                        sslStream.Write(data, 0, data.Length);
+                        sslStream.Flush();
+
+                        _frm.Log($"SRV | Mensaje enviado como cliente a {ipDestino}:{puertoDestino} => {mensaje}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _frm.Log($"SRV | ERROR al enviar mensaje como cliente a {ipDestino}:{puertoDestino}: {ex.Message}");
             }
         }
 
