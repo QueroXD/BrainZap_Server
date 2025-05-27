@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 
@@ -11,6 +13,8 @@ namespace BrainZap_Server.CLASSES
 {
     public class ClSocketServidor
     {
+        const string CERTIFICAT = @"C:\Users\Usuario\Documents\Educem\DAM\M9\elMeuCertificat.pfx";
+        const string psw = "Educem00.";
         private TcpListener server;
         private List<ClUsuario> jugadores = new List<ClUsuario>();
         private ClPreguntas preguntas;
@@ -19,6 +23,7 @@ namespace BrainZap_Server.CLASSES
         private Dictionary<string, List<string>> respuestasPorPregunta = new Dictionary<string, List<string>>();
         private Dictionary<(string preguntaTexto, string nick), string> respuestasIndividuales = new Dictionary<(string preguntaTexto, string nick), string>();
 
+        X509Certificate2 elMeuCertificat = new X509Certificate2(CERTIFICAT, psw);
 
         public ClSocketServidor(FrmMain frm, List<ClUsuario> jugadoresExternos)
         {
@@ -38,9 +43,21 @@ namespace BrainZap_Server.CLASSES
                 while (true)
                 {
                     TcpClient cliente = server.AcceptTcpClient();
+                    SslStream stream = new SslStream(cliente.GetStream(), false, validarCertificat);
+                    try
+                    {
+                        stream.AuthenticateAsServer(elMeuCertificat);
+                    }
+                    catch (Exception ex)
+                    {
+                        _frm.Log($"SRV | ERROR autenticando SSL: {ex.Message}");
+                        cliente.Close();
+                        continue;
+                    }
+
                     _frm.Log($"SRV | Cliente conectado desde {cliente.Client.RemoteEndPoint}");
 
-                    Thread recibir = new Thread(() => RecibirMensaje(cliente));
+                    Thread recibir = new Thread(() => RecibirMensaje(cliente, stream));
                     recibir.IsBackground = true;
                     recibir.Start();
                 }
@@ -50,45 +67,76 @@ namespace BrainZap_Server.CLASSES
             aceptarClientes.Start();
         }
 
-        private void RecibirMensaje(TcpClient cliente)
+        private void RecibirMensaje(TcpClient cliente, SslStream stream)
         {
+            _frm.Log("SRV | Hilo de recepción iniciado.");
+
             try
             {
-                NetworkStream stream = cliente.GetStream();
-                byte[] buffer = new byte[1024];
+                byte[] buffer = new byte[4096];
+                StringBuilder mensajeBuilder = new StringBuilder();
 
                 while (true)
                 {
-                    int leido = stream.Read(buffer, 0, buffer.Length);
-                    if (leido == 0)
-                        break; // El cliente cerró la conexión
+                    int bytesLeidos = stream.Read(buffer, 0, buffer.Length);
 
-                    string mensaje = Encoding.UTF8.GetString(buffer, 0, leido);
+                    if (bytesLeidos == 0)
+                    {
+                        // Cliente cerró conexión
+                        _frm.Log("SRV | Cliente desconectado.");
+                        // Remover jugador de la lista, cerramos stream y cliente
+                        RemoverJugadorPorStream(stream);
+                        break;
+                    }
+
+                    string mensajeParcial = Encoding.UTF8.GetString(buffer, 0, bytesLeidos);
+                    mensajeBuilder.Append(mensajeParcial);
+
+                    string mensaje = mensajeBuilder.ToString().Trim();
+                    mensajeBuilder.Clear();
 
                     if (mensaje.StartsWith("NICK"))
                     {
-                        GestionarNick(mensaje);
+                        GestionarNick(mensaje, cliente, stream);
                     }
                     else if (mensaje.StartsWith("RESPUESTA"))
                     {
                         _frm.Log($"SRV | Respuesta recibida: {mensaje}");
                         GestionarRespuesta(mensaje);
                     }
+                    else
+                    {
+                        _frm.Log($"SRV | Mensaje desconocido: {mensaje}");
+                    }
                 }
             }
             catch (Exception ex)
             {
                 _frm.Log($"SRV | ERROR al recibir mensaje: {ex.Message}");
+                RemoverJugadorPorStream(stream);
             }
             finally
             {
-                cliente.Close(); // Solo se cierra cuando el cliente desconecta
+                stream.Close();
+                cliente.Close();
             }
         }
 
+        private void RemoverJugadorPorStream(SslStream stream)
+        {
+            lock (jugadores)
+            {
+                var jugador = jugadores.FirstOrDefault(j => j.Stream == stream);
+                if (jugador != null)
+                {
+                    jugadores.Remove(jugador);
+                    _frm.Log($"SRV | Jugador {jugador.Nickname} removido por desconexión.");
+                    _frm.MostrarJugadores();
+                }
+            }
+        }
 
-
-        private void GestionarNick(string mensaje)
+        private void GestionarNick(string mensaje, TcpClient tcpClient, SslStream stream)
         {
             string[] partes = mensaje.Split('|');
             if (partes.Length != 4)
@@ -101,18 +149,29 @@ namespace BrainZap_Server.CLASSES
             string ip = partes[2];
             int puerto = int.Parse(partes[3]);
 
-            if (jugadores.Any(j => j.Nickname == nick))
+            lock (jugadores)
             {
-                EnviarRespuestaNick(ip, puerto, $"NICK|{nick}|ERROR");
-                _frm.Log($"SRV | El nick {nick} ya está en uso.");
-            }
-            else
-            {
-                ClUsuario nuevo = new ClUsuario(nick, ip, puerto);
-                jugadores.Add(nuevo);
-                EnviarRespuestaNick(ip, puerto, $"NICK|{nick}|OK");
-                _frm.MostrarJugadores();
-                _frm.Log($"SRV | Jugador registrado: {nick} ({ip}:{puerto})");
+                if (jugadores.Any(j => j.Nickname == nick))
+                {
+                    EnviarPorStream(stream, $"NICK|{nick}|ERROR");
+                    _frm.Log($"SRV | El nick {nick} ya está en uso.");
+                }
+                else
+                {
+                    ClUsuario nuevo = new ClUsuario
+                    {
+                        Nickname = nick,
+                        IP = ip,
+                        Puerto = puerto,
+                        Stream = stream,
+                        Cliente = tcpClient
+                    };
+
+                    jugadores.Add(nuevo);
+                    EnviarPorStream(stream, $"NICK|{nick}|OK");
+                    _frm.MostrarJugadores();
+                    _frm.Log($"SRV | Jugador registrado: {nick} ({ip}:{puerto})");
+                }
             }
         }
 
@@ -159,7 +218,7 @@ namespace BrainZap_Server.CLASSES
                 if (lista.Count == jugadores.Count)
                 {
                     _frm.Log("SRV | Todos los jugadores han respondido.");
-                    _frmPregunta.ForzarFinDePreguntaDesdeServidor(); // Avisamos al FrmPregunta
+                    _frmPregunta?.ForzarFinDePreguntaDesdeServidor(); // Avisamos al FrmPregunta
                 }
             }
         }
@@ -179,7 +238,6 @@ namespace BrainZap_Server.CLASSES
                     ? respuestasPorPregunta[textoPregunta]
                     : new List<string>();
 
-                // Evaluar y almacenar los resultados SIN enviar aún
                 foreach (var jugador in jugadores)
                 {
                     string nick = jugador.Nickname;
@@ -200,69 +258,55 @@ namespace BrainZap_Server.CLASSES
                     resultadosPorJugador[nick] = (estado, puntos);
                 }
 
-                // Asignar los puntos después de evaluar todo
                 foreach (var jugador in jugadores)
                 {
                     jugador.Puntos += resultadosPorJugador[jugador.Nickname].puntos;
                 }
 
-                // Generar el ranking global UNA SOLA VEZ
                 var topRanking = jugadores
                     .OrderByDescending(j => j.Puntos)
                     .Take(3)
                     .Select(j => $"{j.Nickname}:{j.Puntos}")
                     .ToList();
 
-                // Ahora sí, enviar resultados consistentes a todos
                 foreach (var jugador in jugadores)
                 {
                     string nick = jugador.Nickname;
                     var (estado, puntos) = resultadosPorJugador[nick];
 
                     string resultado = $"RESULTADO|{nick}|{estado}|{puntos}|{string.Join(",", topRanking)}";
-                    EnviarResultado(jugador.IP, jugador.Puerto, resultado);
-                    _frm.Log($"SRV | Resultado enviado a {nick}: {resultado}");
+                    EnviarResultado(nick, resultado);
                 }
             }
         }
 
-
-        private void EnviarRespuestaNick(string ip, int puerto, string mensaje)
+        private void EnviarPorStream(SslStream stream, string mensaje)
         {
             try
             {
-                using (TcpClient cliente = new TcpClient())
-                {
-                    cliente.Connect(ip, puerto);
-                    NetworkStream stream = cliente.GetStream();
-                    byte[] data = Encoding.UTF8.GetBytes(mensaje);
-                    stream.Write(data, 0, data.Length);
-                    stream.Flush();
-                    _frm.Log($"SRV | Enviado a {ip}:{puerto} -> {mensaje}");
-                }
+                _frm.Log($"SRV | Enviando mensaje: {mensaje}");
+                byte[] data = Encoding.UTF8.GetBytes(mensaje);
+                stream.Write(data, 0, data.Length);
+                stream.Flush();
+                _frm.Log($"SRV | Mensaje enviado correctamente.");
             }
             catch (Exception ex)
             {
-                _frm.Log($"SRV | ERROR enviando a {ip}:{puerto}: {ex.Message}");
+                _frm.Log($"SRV | ERROR al enviar por stream: {ex.Message}");
             }
         }
 
-        private void EnviarResultado(string ip, int puerto, string mensaje)
+        private void EnviarResultado(string nick, string mensaje)
         {
-            try
+            var jugador = jugadores.FirstOrDefault(j => j.Nickname == nick);
+            if (jugador != null && jugador.Stream != null)
             {
-                using (TcpClient cliente = new TcpClient())
-                {
-                    cliente.Connect(ip, puerto);
-                    NetworkStream stream = cliente.GetStream();
-                    byte[] data = Encoding.UTF8.GetBytes(mensaje);
-                    stream.Write(data, 0, data.Length);
-                    stream.Flush();
-                }
+                EnviarPorStream(jugador.Stream, mensaje);
+                _frm.Log($"SRV | Resultado enviado a {nick}: {mensaje}");
             }
-            catch (Exception ex)
+            else
             {
-                _frm.Log($"SRV | ERROR enviando resultado a {ip}:{puerto}: {ex.Message}");
+                _frm.Log($"SRV | ERROR: no se encontró jugador o stream para {nick}.");
             }
         }
 
@@ -271,51 +315,48 @@ namespace BrainZap_Server.CLASSES
             _frmPregunta = frmPregunta;
         }
 
-        public void EnviarMensajeIndividual(string ip, int puerto, string mensaje)
+        public void EnviarMensajeIndividual(string nick, string mensaje)
         {
-            try
+            var jugador = jugadores.FirstOrDefault(j => j.Nickname == nick);
+            if (jugador != null && jugador.Stream != null)
             {
-                using (TcpClient cliente = new TcpClient())
-                {
-                    cliente.Connect(ip, puerto);
-                    NetworkStream stream = cliente.GetStream();
-                    byte[] data = Encoding.UTF8.GetBytes(mensaje);
-                    stream.Write(data, 0, data.Length);
-                    stream.Flush();
-                }
-                _frm.Log($"SRV | ENDGAME");
+                EnviarPorStream(jugador.Stream, mensaje);
+                _frm.Log($"SRV | Mensaje individual enviado a {nick}: {mensaje}");
             }
-            catch (Exception ex)
+            else
             {
-                _frm.Log($"SRV | ERROR enviando FINPARTIDA a {ip}:{puerto}: {ex.Message}");
+                _frm.Log($"SRV | ERROR enviando mensaje individual a {nick}: jugador o stream no encontrado");
             }
         }
 
         public void EnviarMensaje(string mensaje)
         {
-            byte[] data = Encoding.UTF8.GetBytes(mensaje);
+            if (!mensaje.StartsWith("PREGUNTA"))
+                return;
 
-            if (mensaje.StartsWith("PREGUNTA"))
+            lock (jugadores)
             {
                 foreach (var jugador in jugadores)
                 {
-                    try
+                    if (jugador.Stream != null)
                     {
-                        using (TcpClient cliente = new TcpClient())
+                        try
                         {
-                            cliente.Connect(jugador.IP, jugador.Puerto);
-                            NetworkStream stream = cliente.GetStream();
-                            stream.Write(data, 0, data.Length);
-                            stream.Flush();
+                            EnviarPorStream(jugador.Stream, mensaje);
                             _frm.Log($"SRV | Pregunta enviada a {jugador.Nickname} ({jugador.IP}:{jugador.Puerto})");
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        _frm.Log($"SRV | ERROR enviando pregunta a {jugador.Nickname}: {ex.Message}");
+                        catch (Exception ex)
+                        {
+                            _frm.Log($"SRV | ERROR enviando pregunta a {jugador.Nickname}: {ex.Message}");
+                        }
                     }
                 }
             }
+        }
+
+        private bool validarCertificat(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
         }
     }
 }

@@ -42,7 +42,7 @@ namespace BrainZap_Server.FORMULARIOS
             // Enviar mensaje a todos
             foreach (var jugador in jugadores)
             {
-                servidor.EnviarMensajeIndividual(jugador.IP, jugador.Puerto, mensajeFinal);
+                servidor.EnviarMensajeIndividual(jugador.Nickname, mensajeFinal);
             }
 
             ResponsiveForm();
